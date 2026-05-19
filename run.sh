@@ -81,15 +81,20 @@ if [ "$have_valgrind" -eq 1 ]; then
 		--error-exitcode=42 --quiet "$BIN" "$@" >/dev/null 2>"$BUILD_DIR/printf_test.vg"
 	rc=$?
 	set -e
-	if [ "$rc" -eq 0 ]; then
-		vg="clean"
-	elif [ "$rc" -ne 42 ]; then
-		# valgrind found nothing; non-zero is the test binary's own exit code
-		vg="clean"
-	elif grep -q "lost: [1-9]" "$BUILD_DIR/printf_test.vg"; then
-		vg="leak"
+	# With --trace-children=yes, --error-exitcode only replaces the root
+	# process's exit code. Errors found in forked children make those
+	# children exit 42, which the test harness reports as FAIL — but the
+	# root valgrind sees no error and returns the harness's own rc.
+	# So: trust the .vg file, not rc. With --quiet, valgrind writes to
+	# stderr only when it finds something.
+	if [ -s "$BUILD_DIR/printf_test.vg" ]; then
+		if grep -q "lost: [1-9]" "$BUILD_DIR/printf_test.vg"; then
+			vg="leak"
+		else
+			vg="err"
+		fi
 	else
-		vg="err"
+		vg="clean"
 	fi
 	if [ "$vg" != "clean" ]; then
 		printf "    \033[33m--- valgrind diagnostics ---\033[0m\n"
