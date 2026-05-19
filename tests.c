@@ -522,6 +522,31 @@ static void t_prec_overrides_0(void) { EXPECT_PRINTF_PURE("[%05.3d]", 42); }
 static void t_prec_width_s(void)     { EXPECT_PRINTF_PURE("[%10.3s]", "hello"); }
 static void t_prec_width_s_l(void)   { EXPECT_PRINTF_PURE("[%-10.3s]", "hello"); }
 
+/* `%.0s` with NULL: passing NULL to %s is UB per the standard. We keep
+ * precision=0 because glibc and BSD libc agree on "" here regardless of
+ * how each one resolves the NULL. Non-zero precision with NULL diverges
+ * across libc versions (glibc < 6 prints "", BSD truncates "(null)"), so
+ * we don't pin behavior there. */
+static void t_prec_s_null_zero(void) { EXPECT_PRINTF_PURE("[%.0s]", (char *)NULL); }
+
+/* precision = 0 with sign / space / # flags on zero value. The body is
+ * empty, but the prefix-or-sign should still be emitted (except # for x,
+ * which is suppressed when the value is zero). */
+static void t_prec_plus_zero(void)   { EXPECT_PRINTF_PURE("[%+.0d]", 0); }
+static void t_prec_space_zero(void)  { EXPECT_PRINTF_PURE("[% .0d]", 0); }
+static void t_prec_sharp_x_zero(void){ EXPECT_PRINTF_PURE("[%#.0x]", 0); }
+/* precision pads zeros but # is still suppressed because value is 0 */
+static void t_prec_sharp_x_zero_padded(void) { EXPECT_PRINTF_PURE("[%#.5x]", 0); }
+
+/* width + precision=0 + value=0: body empty, width fills with spaces. The
+ * `0` flag must be suppressed by precision (so we still get spaces, not 0s). */
+static void t_width_prec_zero_d(void)        { EXPECT_PRINTF_PURE("[%5.0d]", 0); }
+static void t_width_prec_zero_left(void)     { EXPECT_PRINTF_PURE("[%-5.0d]", 0); }
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat"
+static void t_width_prec_zero_zeroflag(void) { EXPECT_PRINTF_PURE("[%05.0d]", 0); }
+#pragma GCC diagnostic pop
+
 /* `#` alternate form (x / X). For 0 value, # has no effect. */
 static void t_sharp_x(void)          { EXPECT_PRINTF_PURE("[%#x]", 0xab); }
 static void t_sharp_x_zero(void)     { EXPECT_PRINTF_PURE("[%#x]", 0); }
@@ -957,6 +982,12 @@ int main(int argc, char **argv)
 		RUN(t_prec_overrides_0);
 		RUN(t_prec_width_s);
 		RUN(t_prec_width_s_l);
+		RUN(t_prec_s_null_zero);
+		RUN(t_prec_plus_zero);
+		RUN(t_prec_space_zero);
+		RUN(t_width_prec_zero_d);
+		RUN(t_width_prec_zero_left);
+		RUN(t_width_prec_zero_zeroflag);
 
 		/* --- Bonus: `#` --- */
 		RUN(t_sharp_x);
@@ -967,6 +998,8 @@ int main(int argc, char **argv)
 		RUN(t_sharp_x_zero_pad);
 		RUN(t_sharp_x_left);
 		RUN(t_sharp_x_prec);
+		RUN(t_prec_sharp_x_zero);
+		RUN(t_prec_sharp_x_zero_padded);
 
 		/* --- Bonus: ` ` (space) --- */
 		RUN(t_space_d);
