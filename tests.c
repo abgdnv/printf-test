@@ -276,7 +276,7 @@ static void t_c_many(void)           { EXPECT_PRINTF_PURE("%c%c%c%c", 'a', 'b', 
 
 static void t_s_basic(void)          { EXPECT_PRINTF_PURE("%s", "hello"); }
 static void t_s_empty(void)          { EXPECT_PRINTF_PURE("[%s]", ""); }
-static void t_s_null(void)           { EXPECT_PRINTF_PURE("%s", (char *)NULL); }
+static void t_s_null_UB(void)           { EXPECT_PRINTF_PURE("%s", (char *)NULL); }
 static void t_s_with_percent(void)   { EXPECT_PRINTF_PURE("%s", "%d %s %%"); }
 static void t_s_multiple(void)       { EXPECT_PRINTF_PURE("%s-%s-%s", "one", "two", "three"); }
 static void t_s_long(void)
@@ -422,13 +422,13 @@ static void t_d_minus_one(void)      { EXPECT_PRINTF_PURE("[%d]", -1); }
  * for this block. */
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wformat"
-static void t_d_long_max(void)       { EXPECT_PRINTF_PURE("[%d]", LONG_MAX); }
-static void t_d_long_min(void)       { EXPECT_PRINTF_PURE("[%d]", LONG_MIN); }
-static void t_d_ulong_max(void)      { EXPECT_PRINTF_PURE("[%d]", ULONG_MAX); }
-static void t_u_long_max(void)       { EXPECT_PRINTF_PURE("[%u]", LONG_MAX); }
-static void t_u_long_min(void)       { EXPECT_PRINTF_PURE("[%u]", LONG_MIN); }
-static void t_x_long_max(void)       { EXPECT_PRINTF_PURE("[%x]", LONG_MAX); }
-static void t_X_long_min(void)       { EXPECT_PRINTF_PURE("[%X]", LONG_MIN); }
+static void t_d_long_max_UB(void)       { EXPECT_PRINTF_PURE("[%d]", LONG_MAX); }
+static void t_d_long_min_UB(void)       { EXPECT_PRINTF_PURE("[%d]", LONG_MIN); }
+static void t_d_ulong_max_UB(void)      { EXPECT_PRINTF_PURE("[%d]", ULONG_MAX); }
+static void t_u_long_max_UB(void)       { EXPECT_PRINTF_PURE("[%u]", LONG_MAX); }
+static void t_u_long_min_UB(void)       { EXPECT_PRINTF_PURE("[%u]", LONG_MIN); }
+static void t_x_long_max_UB(void)       { EXPECT_PRINTF_PURE("[%x]", LONG_MAX); }
+static void t_X_long_min_UB(void)       { EXPECT_PRINTF_PURE("[%X]", LONG_MIN); }
 #pragma GCC diagnostic pop
 
 /* %x/%X boundary: digit↔letter transition. */
@@ -527,7 +527,7 @@ static void t_prec_width_s_l(void)   { EXPECT_PRINTF_PURE("[%-10.3s]", "hello");
  * how each one resolves the NULL. Non-zero precision with NULL diverges
  * across libc versions (glibc < 6 prints "", BSD truncates "(null)"), so
  * we don't pin behavior there. */
-static void t_prec_s_null_zero(void) { EXPECT_PRINTF_PURE("[%.0s]", (char *)NULL); }
+static void t_prec_s_null_zero_UB(void) { EXPECT_PRINTF_PURE("[%.0s]", (char *)NULL); }
 
 /* precision = 0 with sign / space / # flags on zero value. The body is
  * empty, but the prefix-or-sign should still be emitted (except # for x,
@@ -851,7 +851,7 @@ int main(int argc, char **argv)
 
 	RUN(t_s_basic);
 	RUN(t_s_empty);
-	RUN(t_s_null);
+	RUN(t_s_null_UB);
 	RUN(t_s_with_percent);
 	RUN(t_s_multiple);
 	RUN(t_s_long);
@@ -899,13 +899,13 @@ int main(int argc, char **argv)
 	RUN(t_c_null_then_more);
 	RUN(t_c_null_with_text);
 	RUN(t_d_minus_one);
-	RUN(t_d_long_max);
-	RUN(t_d_long_min);
-	RUN(t_d_ulong_max);
-	RUN(t_u_long_max);
-	RUN(t_u_long_min);
-	RUN(t_x_long_max);
-	RUN(t_X_long_min);
+	RUN(t_d_long_max_UB);
+	RUN(t_d_long_min_UB);
+	RUN(t_d_ulong_max_UB);
+	RUN(t_u_long_max_UB);
+	RUN(t_u_long_min_UB);
+	RUN(t_x_long_max_UB);
+	RUN(t_X_long_min_UB);
 	RUN(t_x_9);
 	RUN(t_x_10);
 	RUN(t_x_15);
@@ -982,7 +982,7 @@ int main(int argc, char **argv)
 		RUN(t_prec_overrides_0);
 		RUN(t_prec_width_s);
 		RUN(t_prec_width_s_l);
-		RUN(t_prec_s_null_zero);
+		RUN(t_prec_s_null_zero_UB);
 		RUN(t_prec_plus_zero);
 		RUN(t_prec_space_zero);
 		RUN(t_width_prec_zero_d);
