@@ -85,9 +85,10 @@ if [ "$have_valgrind" -eq 1 ]; then
 	# process's exit code. Errors found in forked children make those
 	# children exit 42, which the test harness reports as FAIL — but the
 	# root valgrind sees no error and returns the harness's own rc.
-	# So: trust the .vg file, not rc. With --quiet, valgrind writes to
-	# stderr only when it finds something.
-	if [ -s "$BUILD_DIR/printf_test.vg" ]; then
+	# So: trust the .vg file, not rc. Valgrind output lines start with
+	# `==PID==` — distinguish them from the harness's own FAIL messages
+	# that also land in this file via stderr redirection.
+	if grep -q "^==[0-9]\+==" "$BUILD_DIR/printf_test.vg" 2>/dev/null; then
 		if grep -q "lost: [1-9]" "$BUILD_DIR/printf_test.vg"; then
 			vg="leak"
 		else
