@@ -4,7 +4,7 @@ set -eu
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 PRINTF_DIR="${PRINTF_DIR:-${SCRIPT_DIR}/..}"
 BUILD_DIR="$SCRIPT_DIR/build"
-CC="${CC:-cc}"
+CC="${CC:-gcc}"
 CFLAGS="${CFLAGS:--Wall -Wextra -Werror -g -O0}"
 
 case "${1:-}" in
